@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jirón Technology - Alertas</title>
+    <style>
+        body {
+            background-color: #0d1117;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 50px 20px;
+        }
+        button {
+            background-color: #ff3333;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 20px;
+            box-shadow: 0px 4px 10px rgba(255, 51, 51, 0.4);
+        }
+        #estado {
+            margin-top: 30px;
+            font-size: 14px;
+            color: #8b949e;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Centro de Alertas Jirón Technology</h2>
+    <p>Presiona el botón para activar las notificaciones en este dispositivo.</p>
+    
+    <button onclick="activarAlertas()">ACTIVAR NOTIFICACIONES</button>
+
+    <div id="estado">Iniciando sistema...</div>
+
+    <script>
+        const log = document.getElementById('estado');
+
+        // 1. Registro automático del Service Worker usando ruta relativa estricta
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js')
+                .then(reg => {
+                    log.innerHTML = "✅ Service Worker registrado con éxito.";
+                    console.log("Scope:", reg.scope);
+                })
+                .catch(err => {
+                    log.innerHTML = "❌ Error al registrar SW: " + err.message;
+                });
+        } else {
+            log.innerHTML = "❌ Tu navegador no soporta Service Workers.";
+        }
+
+        // 2. Función para pedir permisos y lanzar notificación de prueba
+        async function activarAlertas() {
+            if (!('Notification' in window)) {
+                alert("Este navegador no soporta notificaciones.");
+                return;
+            }
+
+            log.innerHTML = "Solicitando permisos de notificación...";
+            
+            try {
+                const permiso = await Notification.requestPermission();
+                log.innerHTML = "Estado del permiso: " + permiso;
+
+                if (permiso === 'granted') {
+                    // Obtener el service worker activo y lanzar la alerta
+                    const registro = await navigator.serviceWorker.ready;
+                    
+                    registro.showNotification("¡Alertas Activas!", {
+                        body: "Jirón Technology te notificará sobre nueva actividad sísmica.",
+                        icon: "./icono.png", // Asegúrate de tener una imagen aquí o bórrala del código si no tienes una
+                        badge: "./icono.png",
+                        vibrate: [200, 100, 200]
+                    });
+                    
+                    log.innerHTML = "🎉 ¡Permiso concedido! Notificación de prueba enviada.";
+                } else {
+                    alert("Permiso denegado. Debes habilitarlo en los ajustes de tu navegador.");
+                }
+            } catch (error) {
+                log.innerHTML = "❌ Error en el proceso: " + error.message;
+            }
+        }
+    </script>
+</body>
+</html>
